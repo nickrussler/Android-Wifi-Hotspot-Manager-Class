@@ -19,6 +19,7 @@ package com.whitebyte.hotspotcontrolexample;
 import java.util.ArrayList;
 
 import android.app.Activity;
+import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,18 +31,19 @@ import com.whitebyte.wifihotspotutils.WifiApManager;
 
 public class Main extends Activity {
 	TextView textView1;
-	WifiApManager wifiApManager;
+	WifiApManager wifiApManager; 
 
 	/** Called when the activity is first created. */
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
-		
+
 		textView1 = (TextView) findViewById(R.id.textView1);
 		wifiApManager = new WifiApManager(this);
-		
+
 		scan();
+
 	}
 
 	private void scan() {
