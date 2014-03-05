@@ -31,7 +31,8 @@ import com.whitebyte.wifihotspotutils.WifiApManager;
 
 public class Main extends Activity {
 	TextView textView1;
-	WifiApManager wifiApManager; 
+	WifiApManager wifiApManager;
+	WifiConfiguration wc;
 
 	/** Called when the activity is first created. */
 	@Override
@@ -43,6 +44,20 @@ public class Main extends Activity {
 		wifiApManager = new WifiApManager(this);
 
 		scan();
+		
+		//set a custom WPA wiFi configuration  
+		
+		wc = new WifiConfiguration();
+		wc.SSID = "mySSID";
+		wc.preSharedKey  = "password";
+		wc.hiddenSSID = true;
+		wc.status = WifiConfiguration.Status.ENABLED;        
+		wc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+		wc.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+		wc.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+		wc.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+		wc.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+		wc.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
 
 	}
 
@@ -74,10 +89,10 @@ public class Main extends Activity {
 			scan();
 			break;
 		case 1:
-			wifiApManager.setWifiApEnabled(null, true);
+			wifiApManager.setWifiApEnabled(wc, true);
 			break;
 		case 2:
-			wifiApManager.setWifiApEnabled(null, false);
+			wifiApManager.setWifiApEnabled(wc, false);
 			break;
 		}
 
