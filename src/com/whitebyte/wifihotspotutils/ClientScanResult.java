@@ -28,7 +28,7 @@ public class ClientScanResult {
 		this.IpAddr = ipAddr;
 		this.HWAddr = hWAddr;
 		this.Device = device;
-		this.isReachable = isReachable ;
+		this.isReachable = isReachable;
 	}
 
 	public String getIpAddr() {
