@@ -26,13 +26,16 @@ import java.util.ArrayList;
 import android.content.Context;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
 import android.util.Log;
 
 public class WifiApManager {
 	private final WifiManager mWifiManager;
+	private Context context;
 
 	public WifiApManager(Context context) {
-		mWifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+		this.context = context;
+		mWifiManager = (WifiManager) this.context.getSystemService(Context.WIFI_SERVICE);
 	}
 
 	/**
@@ -49,7 +52,7 @@ public class WifiApManager {
 			if (enabled) { // disable WiFi in any case
 				mWifiManager.setWifiEnabled(false);
 			}
-			
+
 			Method method = mWifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, boolean.class);
 			return (Boolean) method.invoke(mWifiManager, wifiConfig, enabled);
 		} catch (Exception e) {
@@ -123,52 +126,69 @@ public class WifiApManager {
 	/**
 	 * Gets a list of the clients connected to the Hotspot, reachable timeout is 300
 	 * @param onlyReachables {@code false} if the list should contain unreachable (probably disconnected) clients, {@code true} otherwise
-	 * @return ArrayList of {@link ClientScanResult}
+	 * @param finishListener, Interface called when the scan method finishes
 	 */
-	public ArrayList<ClientScanResult> getClientList(boolean onlyReachables) {
-		return getClientList(onlyReachables, 300);
+	public void getClientList(boolean onlyReachables, FinishScanListener finishListner) {
+		getClientList(onlyReachables, 300, finishListner );
 	}
 
 	/**
 	 * Gets a list of the clients connected to the Hotspot 
 	 * @param onlyReachables {@code false} if the list should contain unreachable (probably disconnected) clients, {@code true} otherwise
 	 * @param reachableTimeout Reachable Timout in miliseconds
-	 * @return ArrayList of {@link ClientScanResult}
+	 * @param finishListener, Interface called when the scan method finishes 
 	 */
-	public ArrayList<ClientScanResult> getClientList(boolean onlyReachables, int reachableTimeout) {
-		BufferedReader br = null;
-		ArrayList<ClientScanResult> result = null;
+	public void getClientList(final boolean onlyReachables, final int reachableTimeout, final FinishScanListener finishListener) {
 
-		try {
-			result = new ArrayList<ClientScanResult>();
-			br = new BufferedReader(new FileReader("/proc/net/arp"));
-			String line;
-			while ((line = br.readLine()) != null) {
-				String[] splitted = line.split(" +");
 
-				if ((splitted != null) && (splitted.length >= 4)) {
-					// Basic sanity check
-					String mac = splitted[3];
+		Runnable runnable = new Runnable() {
+			public void run() {
 
-					if (mac.matches("..:..:..:..:..:..")) {
-						boolean isReachable = InetAddress.getByName(splitted[0]).isReachable(reachableTimeout);
+				BufferedReader br = null;
+				final ArrayList<ClientScanResult> result = new ArrayList<ClientScanResult>();
+				
+				try {
+					br = new BufferedReader(new FileReader("/proc/net/arp"));
+					String line;
+					while ((line = br.readLine()) != null) {
+						String[] splitted = line.split(" +");
 
-						if (!onlyReachables || isReachable) {
-							result.add(new ClientScanResult(splitted[0], splitted[3], splitted[5], isReachable));
+						if ((splitted != null) && (splitted.length >= 4)) {
+							// Basic sanity check
+							String mac = splitted[3];
+
+							if (mac.matches("..:..:..:..:..:..")) {
+								boolean isReachable = InetAddress.getByName(splitted[0]).isReachable(reachableTimeout);
+
+								if (!onlyReachables || isReachable) {
+									result.add(new ClientScanResult(splitted[0], splitted[3], splitted[5], isReachable));
+								}
+							}
 						}
 					}
+				} catch (Exception e) {
+					Log.e(this.getClass().toString(), e.toString());
+				} finally {
+					try {
+						br.close();
+					} catch (IOException e) {
+						Log.e(this.getClass().toString(), e.getMessage());
+					}
 				}
-			}
-		} catch (Exception e) {
-			Log.e("some", e.toString());
-		} finally {
-			try {
-				br.close();
-			} catch (IOException e) {
-				Log.e(this.getClass().toString(), e.getMessage());
-			}
-		}
 
-		return result;
+				// Get a handler that can be used to post to the main thread
+				Handler mainHandler = new Handler(context.getMainLooper());
+				Runnable myRunnable = new Runnable() {
+					@Override
+					public void run() {
+						finishListener.onFinishScan(result);
+					}
+				};
+				mainHandler.post(myRunnable);
+			}
+		};
+
+		Thread mythread = new Thread(runnable);
+		mythread.start();
 	}
 }

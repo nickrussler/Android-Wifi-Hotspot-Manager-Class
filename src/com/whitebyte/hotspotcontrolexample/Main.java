@@ -19,7 +19,6 @@ package com.whitebyte.hotspotcontrolexample;
 import java.util.ArrayList;
 
 import android.app.Activity;
-import android.net.wifi.WifiConfiguration;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -27,6 +26,7 @@ import android.widget.TextView;
 
 import com.whitebyte.hotspotclients.R;
 import com.whitebyte.wifihotspotutils.ClientScanResult;
+import com.whitebyte.wifihotspotutils.FinishScanListener;
 import com.whitebyte.wifihotspotutils.WifiApManager;
 
 public class Main extends Activity {
@@ -47,18 +47,22 @@ public class Main extends Activity {
 	}
 
 	private void scan() {
-		ArrayList<ClientScanResult> clients = wifiApManager.getClientList(false);
+		wifiApManager.getClientList(false, new FinishScanListener() {
 
-		textView1.setText("WifiApState: " + wifiApManager.getWifiApState() + "\n\n");
+			@Override
+			public void onFinishScan(final ArrayList<ClientScanResult> clients) {
 
-		textView1.append("Clients: \n");
-		for (ClientScanResult clientScanResult : clients) {
-			textView1.append("####################\n");
-			textView1.append("IpAddr: " + clientScanResult.getIpAddr() + "\n");
-			textView1.append("Device: " + clientScanResult.getDevice() + "\n");
-			textView1.append("HWAddr: " + clientScanResult.getHWAddr() + "\n");
-			textView1.append("isReachable: " + clientScanResult.isReachable() + "\n");
-		}
+				textView1.setText("WifiApState: " + wifiApManager.getWifiApState() + "\n\n");
+				textView1.append("Clients: \n");
+				for (ClientScanResult clientScanResult : clients) {
+					textView1.append("####################\n");
+					textView1.append("IpAddr: " + clientScanResult.getIpAddr() + "\n");
+					textView1.append("Device: " + clientScanResult.getDevice() + "\n");
+					textView1.append("HWAddr: " + clientScanResult.getHWAddr() + "\n");
+					textView1.append("isReachable: " + clientScanResult.isReachable() + "\n");
+				}
+			}
+		});
 	}
 
 	public boolean onCreateOptionsMenu(Menu menu) {
