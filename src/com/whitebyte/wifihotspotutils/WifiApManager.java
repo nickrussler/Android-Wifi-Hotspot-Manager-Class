@@ -73,7 +73,7 @@ public class WifiApManager {
 			int tmp = ((Integer)method.invoke(mWifiManager));
 
 			// Fix for Android 4
-			if (tmp > 10) {
+			if (tmp >= 10) {
 				tmp = tmp - 10;
 			}
 
